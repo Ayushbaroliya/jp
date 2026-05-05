@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>JP Cricket Academy</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  font-family:'Inter',sans-serif;
+  background:#f6f8fb;
+  color:#1f2937;
+}
+
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#1e293b,#334155);
+  color:white;
+  padding:16px;
+  text-align:center;
+  font-weight:600;
+  letter-spacing:1px;
+}
+
+/* DASHBOARD */
+.dashboard{
+  padding:12px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.stat{
+  background:#ffffff;
+  padding:14px;
+  border-radius:14px;
+  text-align:center;
+  font-size:13px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.05);
+}
+
+.stat b{
+  display:block;
+  margin-top:5px;
+  font-size:18px;
+}
+
+/* COLORS */
+.green{color:#10b981;}
+.red{color:#ef4444;}
+.blue{color:#3b82f6;}
+
+/* PIE CHART */
+.chart-box{
+  background:white;
+  margin-top:12px;
+  padding:12px;
+  border-radius:14px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.05);
+}
+
+/* FILTERS */
+.filters{
+  padding:12px;
+}
+
+.search{
+  width:100%;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid #d1d5db;
+  margin-bottom:10px;
+  background:#fff;
+}
+
+/* BUTTONS */
+.btn-group{
+  display:flex;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.btn{
+  flex:1;
+  padding:8px;
+  border-radius:12px;
+  border:none;
+  font-size:13px;
+  cursor:pointer;
+  background:#e5e7eb;
+  transition:0.2s;
+}
+
+.btn.active{
+  background:#2563eb;
+  color:white;
+  box-shadow:0 4px 12px rgba(37,99,235,0.3);
+}
+
+/* STUDENT CARD */
+.students{
+  padding:12px;
+}
+
+.card{
+  background:white;
+  padding:12px;
+  border-radius:14px;
+  margin-bottom:10px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.05);
+}
+
+.card.due{
+  border-left:4px solid #ef4444;
+}
+
+.name{
+  font-weight:600;
+  margin-bottom:5px;
+}
+
+/* DESKTOP */
+@media(min-width:768px){
+  .stats{
+    grid-template-columns:repeat(4,1fr);
+  }
+
+  .students{
+    display:none;
+  }
+
+  table{
+    width:100%;
+    background:white;
+    border-collapse:collapse;
+    margin-top:10px;
+  }
+
+  th,td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">JP CRICKET ACADEMY</div>
+
+<div class="dashboard">
+  <div class="stats">
+    <div class="stat">Students<b id="total"></b></div>
+    <div class="stat green">Collected<b id="paid"></b></div>
+    <div class="stat red">Due<b id="due"></b></div>
+    <div class="stat blue">Pending<b id="dueCount"></b></div>
+  </div>
+
+  <div class="chart-box">
+    <canvas id="chart" height="140"></canvas>
+  </div>
+</div>
+
+<div class="filters">
+  <input class="search" id="search" placeholder="Search name or mobile">
+
+  <div class="btn-group" id="typeBtns">
+    <button class="btn active" onclick="setType('')">All</button>
+    <button class="btn" onclick="setType('Hosteller')">Hosteller</button>
+    <button class="btn" onclick="setType('Local')">Local</button>
+  </div>
+
+  <div class="btn-group" id="dueBtns">
+    <button class="btn active" onclick="setDue('')">All</button>
+    <button class="btn" onclick="setDue('due')">Due Only</button>
+  </div>
+</div>
+
+<div class="students" id="cards"></div>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Mobile</th>
+<th>Paid</th>
+<th>Due</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+<script>
+
+let typeFilter="";
+let dueFilter="";
+
+/* 20 STUDENTS */
+let students=[
+{name:"Rahul",mobile:"9876543210",paid:2000,due:1000,type:"Hosteller"},
+{name:"Amit",mobile:"9123456780",paid:3000,due:0,type:"Local"},
+{name:"Vikas",mobile:"9988776655",paid:1000,due:2000,type:"Hosteller"},
+{name:"Rohit",mobile:"8899001122",paid:0,due:4000,type:"Local"},
+{name:"Mohit",mobile:"7766554433",paid:2000,due:0,type:"Local"},
+{name:"Arjun",mobile:"9001122334",paid:1500,due:1500,type:"Hosteller"},
+{name:"Sahil",mobile:"8112233445",paid:2500,due:500,type:"Local"},
+{name:"Deepak",mobile:"7334455667",paid:1000,due:3000,type:"Hosteller"},
+{name:"Karan",mobile:"9223344556",paid:4000,due:0,type:"Local"},
+{name:"Sumit",mobile:"8445566778",paid:500,due:2500,type:"Hosteller"},
+{name:"Nitin",mobile:"7001122334",paid:1800,due:200,type:"Local"},
+{name:"Rakesh",mobile:"7112233445",paid:1200,due:1800,type:"Hosteller"},
+{name:"Manish",mobile:"7223344556",paid:3500,due:0,type:"Local"},
+{name:"Piyush",mobile:"7334455666",paid:900,due:2100,type:"Hosteller"},
+{name:"Ankit",mobile:"7445566777",paid:2700,due:300,type:"Local"},
+{name:"Yash",mobile:"7556677888",paid:0,due:3500,type:"Hosteller"},
+{name:"Harsh",mobile:"7667788999",paid:3000,due:0,type:"Local"},
+{name:"Shivam",mobile:"7778899000",paid:1000,due:2000,type:"Hosteller"},
+{name:"Tarun",mobile:"7889900111",paid:2200,due:800,type:"Local"},
+{name:"Akash",mobile:"7990011222",paid:500,due:2500,type:"Hosteller"}
+];
+
+function render(data){
+  let total=data.length;
+  let paid=data.reduce((a,b)=>a+b.paid,0);
+  let due=data.reduce((a,b)=>a+b.due,0);
+  let dueCount=data.filter(s=>s.due>0).length;
+
+  totalEl.innerText=total;
+  paidEl.innerText="₹"+paid;
+  dueEl.innerText="₹"+due;
+  dueCountEl.innerText=dueCount;
+
+  cards.innerHTML=data.map(s=>`
+  <div class="card ${s.due>0?'due':''}">
+    <div class="name">${s.name}</div>
+    📞 ${s.mobile}<br>
+    💰 ₹${s.paid} | ⚠️ ₹${s.due}<br>
+    🏠 ${s.type}
+  </div>`).join("");
+
+  tbody.innerHTML=data.map(s=>`
+  <tr>
+    <td>${s.name}</td>
+    <td>${s.mobile}</td>
+    <td class="green">₹${s.paid}</td>
+    <td class="${s.due>0?'red':''}">₹${s.due}</td>
+    <td>${s.type}</td>
+  </tr>`).join("");
+
+  drawPie(paid,due);
+}
+
+function filter(){
+  let search=document.getElementById("search").value.toLowerCase();
+
+  let filtered=students.filter(s=>{
+    return(
+      (s.name.toLowerCase().includes(search)||s.mobile.includes(search)) &&
+      (typeFilter==""||s.type==typeFilter) &&
+      (dueFilter==""||(dueFilter=="due"&&s.due>0))
+    );
+  });
+
+  render(filtered);
+}
+
+function setType(type){
+  typeFilter=type;
+  toggleBtns("typeBtns",type);
+  filter();
+}
+
+function setDue(val){
+  dueFilter=val;
+  toggleBtns("dueBtns",val);
+  filter();
+}
+
+function toggleBtns(groupId,value){
+  document.querySelectorAll(`#${groupId} .btn`).forEach(btn=>{
+    btn.classList.remove("active");
+    if(btn.innerText.toLowerCase().includes(value.toLowerCase()) || (value=="" && btn.innerText=="All")){
+      btn.classList.add("active");
+    }
+  });
+}
+
+/* PIE CHART */
+function drawPie(paid,due){
+  let c=document.getElementById("chart");
+  let ctx=c.getContext("2d");
+  ctx.clearRect(0,0,300,150);
+
+  let total=paid+due;
+  let paidAngle=(paid/total)*Math.PI*2;
+
+  ctx.beginPath();
+  ctx.moveTo(150,75);
+  ctx.fillStyle="#10b981";
+  ctx.arc(150,75,60,0,paidAngle);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(150,75);
+  ctx.fillStyle="#ef4444";
+  ctx.arc(150,75,60,paidAngle,Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle="#111";
+  ctx.font="12px Inter";
+  ctx.fillText("Paid",20,20);
+  ctx.fillText("Due",220,20);
+}
+
+document.getElementById("search").oninput=filter;
+
+let totalEl=document.getElementById("total");
+let paidEl=document.getElementById("paid");
+let dueEl=document.getElementById("due");
+let dueCountEl=document.getElementById("dueCount");
+let cards=document.getElementById("cards");
+let tbody=document.getElementById("tbody");
+
+render(students);
+
+</script>
+
+</body>
+</html>
